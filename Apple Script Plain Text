@@ -1,0 +1,90 @@
+set savedClipboard to my fetchStorableClipboard()
+tell application "TextEdit"
+	activate
+	set thePasteboard to current application's NSPasteboard's generalPasteboard()
+	set theCount to thePasteboard's changeCount()
+	set the clipboard to ""
+	tell application "System Events" to keystroke "c" using {command down}
+	repeat 20 times
+		if thePasteboard's changeCount() is not theCount then exit repeat
+		delay 0.1
+	end repeat
+	try
+		set theSelectedText to the clipboard
+	on error
+		set theSelectedText to ""
+	end try
+end tell
+if theSelectedText is not equal to "" then
+	tell application "TextEdit"
+		activate
+		set allCharacters to every character of theSelectedText
+		set numberOfCharacters to (count allCharacters)
+		set characterText to "Characters \t\t\t\t" & numberOfCharacters
+		set allWords to every word of theSelectedText
+		set numberOfWords to (count allWords)
+		set wordText to "Words \t\t\t\t\t" & numberOfWords
+		set allParagraphs to every paragraph of theSelectedText
+		set numberOfParagraphs to (count allParagraphs)
+		set paragraphText to "Paragraphs \t\t\t\t" & numberOfParagraphs
+		set quantum to 0.01
+		set A to (round (numberOfCharacters / numberOfWords) / quantum) * quantum
+		if A = numberOfCharacters / numberOfWords then
+			A
+		else
+			set A to A & "*"
+		end if
+		set selectedText to "SELECTED TEXT OVERVIEW" & return & characterText & return & wordText & return & paragraphText & return & "Average Word Length \t\t" & A
+	end tell
+else
+	tell application "TextEdit"
+		set selectedText to "NO SELECTED TEXT OVERVIEW" & return & "Characters\tX" & return & "Words\t\tX" & return & "Paragraphs\tX" & return & "Average Word Length \t\tNA"
+	end tell
+end if
+tell application "TextEdit"
+	activate
+	set allCharacters to every character of the front document
+	set numberOfCharacters to (count allCharacters)
+	set characterText to "Characters \t\t\t\t" & numberOfCharacters
+	set allWords to every word of the front document
+	set numberOfWords to (count allWords)
+	set wordText to "Words \t\t\t\t\t" & numberOfWords
+	set allParagraphs to every paragraph of the front document
+	set numberOfParagraphs to (count allParagraphs)
+	set paragraphText to "Paragraphs \t\t\t\t" & numberOfParagraphs
+	set quantum to 0.01
+	set A to (round (numberOfCharacters / numberOfWords) / quantum) * quantum
+	if A = numberOfCharacters / numberOfWords then
+		A
+	else
+		set A to A & "*"
+	end if
+	set fullText to "FULL DOCUMENT OVERVIEW" & return & characterText & return & wordText & return & paragraphText & return & "Average Word Length \t\t" & A
+	display dialog selectedText & return & return & fullText buttons {"OK"} default button 1
+end tell
+my putOnClipboard:savedClipboard
+use AppleScript version "2.4"
+use scripting additions
+use framework "Foundation"
+use framework "AppKit"
+on fetchStorableClipboard()
+	set aMutableArray to current application's NSMutableArray's array()
+	set thePasteboard to current application's NSPasteboard's generalPasteboard()
+	repeat with anItem in thePasteboard's pasteboardItems()
+		set newPBItem to current application's NSPasteboardItem's alloc()'s init()
+		set theTypes to anItem's types()
+		repeat with aType in theTypes
+			set theData to (anItem's dataForType:aType)'s mutableCopy()
+			if theData is not missing value then
+				(newPBItem's setData:theData forType:aType)
+			end if
+		end repeat
+		(aMutableArray's addObject:newPBItem)
+	end repeat
+	return aMutableArray
+end fetchStorableClipboard
+on putOnClipboard:theArray
+	set thePasteboard to current application's NSPasteboard's generalPasteboard()
+	thePasteboard's clearContents()
+	thePasteboard's writeObjects:theArray
+end putOnClipboard:
